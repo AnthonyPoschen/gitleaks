@@ -14,6 +14,10 @@ type Allowlist struct {
 	// Regexes is slice of content regular expressions that are allowed to be ignored.
 	Regexes []*regexp.Regexp
 
+	// RegexFullLine when true will make "Regexes" be done against the full line of
+	// a match instead of just the secret
+	RegexFullLine bool
+
 	// Paths is a slice of path regular expressions that are allowed to be ignored.
 	Paths []*regexp.Regexp
 
