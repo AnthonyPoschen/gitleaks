@@ -202,7 +202,7 @@ func (d *Detector) detectRule(fragment Fragment, rule *config.Rule) []report.Fin
 
 		// check if the secret is in the allowlist
 		regexMatchText := finding.Secret
-		if d.Config.Allowlist.RegexAllowed {
+		if d.Config.Allowlist.RegexFullLine {
 			regexMatchText = fragment.Raw
 		}
 		if rule.Allowlist.RegexAllowed(regexMatchText) ||
