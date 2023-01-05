@@ -15,7 +15,7 @@ const (
 )
 
 func main() {
-	configRules := []*config.Rule{}
+	var configRules []*config.Rule
 	configRules = append(configRules, rules.AdafruitAPIKey())
 	configRules = append(configRules, rules.AdobeClientID())
 	configRules = append(configRules, rules.AdobeClientSecret())
@@ -41,6 +41,9 @@ func main() {
 	configRules = append(configRules, rules.Contentful())
 	configRules = append(configRules, rules.Databricks())
 	configRules = append(configRules, rules.DatadogtokenAccessToken())
+	configRules = append(configRules, rules.DigitalOceanPAT())
+	configRules = append(configRules, rules.DigitalOceanOAuthToken())
+	configRules = append(configRules, rules.DigitalOceanRefreshToken())
 	configRules = append(configRules, rules.DiscordAPIToken())
 	configRules = append(configRules, rules.DiscordClientID())
 	configRules = append(configRules, rules.DiscordClientSecret())
@@ -70,15 +73,20 @@ func main() {
 	// configRules = append(configRules, rules.GCPServiceAccount())
 	configRules = append(configRules, rules.GCPAPIKey())
 	configRules = append(configRules, rules.GitHubPat())
+	configRules = append(configRules, rules.GitHubFineGrainedPat())
 	configRules = append(configRules, rules.GitHubOauth())
 	configRules = append(configRules, rules.GitHubApp())
 	configRules = append(configRules, rules.GitHubRefresh())
 	configRules = append(configRules, rules.Gitlab())
 	configRules = append(configRules, rules.GitterAccessToken())
+	configRules = append(configRules, rules.GrafanaApiKey())
+	configRules = append(configRules, rules.GrafanaCloudApiToken())
+	configRules = append(configRules, rules.GrafanaServiceAccountToken())
 	configRules = append(configRules, rules.Hashicorp())
 	configRules = append(configRules, rules.Heroku())
 	configRules = append(configRules, rules.HubSpot())
 	configRules = append(configRules, rules.Intercom())
+	configRules = append(configRules, rules.JWT())
 	configRules = append(configRules, rules.KrakenAccessToken())
 	configRules = append(configRules, rules.KucoinAccessToken())
 	configRules = append(configRules, rules.KucoinSecretKey())
@@ -111,11 +119,13 @@ func main() {
 	configRules = append(configRules, rules.PlanetScaleAPIToken())
 	configRules = append(configRules, rules.PlanetScaleOAuthToken())
 	configRules = append(configRules, rules.PostManAPI())
+	configRules = append(configRules, rules.Prefect())
 	configRules = append(configRules, rules.PrivateKey())
 	configRules = append(configRules, rules.PulumiAPIToken())
 	configRules = append(configRules, rules.PyPiUploadToken())
-	configRules = append(configRules, rules.RubyGemsAPIToken())
 	configRules = append(configRules, rules.RapidAPIAccessToken())
+	configRules = append(configRules, rules.ReadMe())
+	configRules = append(configRules, rules.RubyGemsAPIToken())
 	configRules = append(configRules, rules.SendbirdAccessID())
 	configRules = append(configRules, rules.SendbirdAccessToken())
 	configRules = append(configRules, rules.SendGridAPIToken())
@@ -126,6 +136,8 @@ func main() {
 	configRules = append(configRules, rules.ShopifyCustomAccessToken())
 	configRules = append(configRules, rules.ShopifyPrivateAppAccessToken())
 	configRules = append(configRules, rules.ShopifySharedSecret())
+	configRules = append(configRules, rules.SidekiqSecret())
+	configRules = append(configRules, rules.SidekiqSensitiveUrl())
 	configRules = append(configRules, rules.SlackAccessToken())
 	configRules = append(configRules, rules.SlackWebHook())
 	configRules = append(configRules, rules.StripeAccessToken())
@@ -133,6 +145,8 @@ func main() {
 	configRules = append(configRules, rules.SquareSpaceAccessToken())
 	configRules = append(configRules, rules.SumoLogicAccessID())
 	configRules = append(configRules, rules.SumoLogicAccessToken())
+	configRules = append(configRules, rules.TeamsWebhook())
+	configRules = append(configRules, rules.TelegramBotToken())
 	configRules = append(configRules, rules.TravisCIAccessToken())
 	configRules = append(configRules, rules.Twilio())
 	configRules = append(configRules, rules.TwitchAPIToken())
@@ -142,6 +156,8 @@ func main() {
 	configRules = append(configRules, rules.TwitterAccessSecret())
 	configRules = append(configRules, rules.TwitterBearerToken())
 	configRules = append(configRules, rules.Typeform())
+	configRules = append(configRules, rules.VaultBatchToken())
+	configRules = append(configRules, rules.VaultServiceToken())
 	configRules = append(configRules, rules.YandexAPIKey())
 	configRules = append(configRules, rules.YandexAWSAccessToken())
 	configRules = append(configRules, rules.YandexAccessToken())
@@ -149,17 +165,17 @@ func main() {
 	configRules = append(configRules, rules.GenericCredential())
 
 	// ensure rules have unique ids
-	ruleLookUp := make(map[string]bool)
+	ruleLookUp := make(map[string]config.Rule)
 	for _, rule := range configRules {
 		// check if rule is in ruleLookUp
 		if _, ok := ruleLookUp[rule.RuleID]; ok {
 			log.Fatal().Msgf("rule id %s is not unique", rule.RuleID)
 		}
-		ruleLookUp[rule.RuleID] = true
+		// TODO: eventually change all the signatures to get ride of this
+		// nasty dereferencing.
+		ruleLookUp[rule.RuleID] = *rule
 	}
-	config := config.Config{
-		Rules: configRules,
-	}
+
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to parse template")
@@ -169,6 +185,9 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to create rules.toml")
 	}
-	tmpl.Execute(f, config)
+
+	if err = tmpl.Execute(f, config.Config{Rules: ruleLookUp}); err != nil {
+		log.Fatal().Err(err).Msg("could not execute template")
+	}
 
 }

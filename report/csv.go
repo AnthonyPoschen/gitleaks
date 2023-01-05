@@ -16,6 +16,7 @@ func writeCsv(f []Finding, w io.WriteCloser) error {
 	err := cw.Write([]string{"RuleID",
 		"Commit",
 		"File",
+		"SymlinkFile",
 		"Secret",
 		"Match",
 		"StartLine",
@@ -26,6 +27,7 @@ func writeCsv(f []Finding, w io.WriteCloser) error {
 		"Message",
 		"Date",
 		"Email",
+		"Fingerprint",
 	})
 	if err != nil {
 		return err
@@ -34,6 +36,7 @@ func writeCsv(f []Finding, w io.WriteCloser) error {
 		err = cw.Write([]string{f.RuleID,
 			f.Commit,
 			f.File,
+			f.SymlinkFile,
 			f.Secret,
 			f.Match,
 			strconv.Itoa(f.StartLine),
@@ -44,6 +47,7 @@ func writeCsv(f []Finding, w io.WriteCloser) error {
 			f.Message,
 			f.Date,
 			f.Email,
+			f.Fingerprint,
 		})
 		if err != nil {
 			return err
